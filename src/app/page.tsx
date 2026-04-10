@@ -9,7 +9,7 @@ export default async function HomePage() {
       <section className="mb-10 md:mb-12">
         <div className="flex flex-col gap-2">
           <p className="text-xs font-mono uppercase tracking-widest text-muted">
-            2024–25 Season
+            2025–26 Season
           </p>
           <h1 className="font-display font-bold text-4xl md:text-5xl xl:text-6xl text-primary leading-none tracking-tight">
             All 30 <span className="text-accent">NBA</span> Teams
