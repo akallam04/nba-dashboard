@@ -1,6 +1,6 @@
 # NBA Teams Dashboard
 
-> An editorial-style data dashboard for all 30 NBA franchises — built as a front-end take-home project.
+A responsive data dashboard showcasing all 30 NBA franchises — built as a front-end take-home project in Next.js 16 with a focus on aesthetic polish, accessibility, and thoughtful architecture.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
@@ -9,37 +9,37 @@
 
 ---
 
-## Screenshots
+![Dark mode list view](./docs/dark-list.png)
 
-| Dark Mode | Light Mode |
-|-----------|------------|
-| ![Dark mode list view](./docs/dark-list.png) | ![Light mode list view](./docs/light-list.png) |
-| ![Dark mode detail view](./docs/dark-detail.png) | ![Light mode detail view](./docs/light-detail.png) |
-
-> Add screenshots to the `./docs/` folder after running the app locally.
+| | |
+|---|---|
+| ![Light mode list view](./docs/light-list.png) | ![Dark mode detail view](./docs/dark-detail.png) |
+| ![Light mode detail view](./docs/light-detail.png) | |
 
 ---
+
+## Highlights
+
+- **Editorial visual design** — per-team accent colors pulled from the API, Space Grotesk display type, and a dark mode that's the default (not an afterthought)
+- **Zero-flash theme toggle** — a blocking inline script sets the theme before first paint, so reloading never shows a white flash in dark mode
+- **Real React 19 concurrent features** — search uses `useDeferredValue` so typing never blocks rendering, even on a throttled CPU
+- **Server Components by default** — data fetching lives in `async` server components, client components only where interactivity demands them
 
 ## Features
 
-- **30 NBA teams** rendered in a responsive grid (1 → 2 → 3 → 4 columns)
-- **Live search** filters teams by name, city, or abbreviation — debounced with `useDeferredValue`
-- **Empty state** with a clear-search prompt when no results match
-- **Skeleton loading** — card-shaped skeletons instead of a spinner for a polished feel
-- **Error states** at both the list and detail level with a "Try again" button
-- **Team detail pages** showing badge, founded year, arena, capacity, city, description, gallery images, and roster
-- **Per-team accent colors** pulled from the API's `strColour1` field — every card is visually distinct
-- **Dark/light mode toggle** persisted to `localStorage`, respects `prefers-color-scheme` on first visit, and uses a blocking inline script to prevent theme flash
-- **Editorial typography** — Space Grotesk (display) + Inter (body) via `next/font/google`
-- **Staggered card animations** on load and hover-lift via Framer Motion
-- **Fully accessible** — semantic HTML, proper `alt` text, focus rings, keyboard navigation, ARIA live regions for search results
-- **Zero external runtime dependencies** beyond framer-motion, clsx, and tailwind-merge
+- All 30 NBA teams in a responsive grid (1 → 2 → 3 → 4 columns across breakpoints)
+- Live client-side search by name, city, or abbreviation
+- Dedicated team detail pages with badge, arena, capacity, founding year, description, and roster
+- Skeleton loading, empty, and error states at both the list and detail levels
+- Error boundaries with a working "Try again" button that refetches
+- Dark / light mode toggle persisted to `localStorage`, respects `prefers-color-scheme` on first visit
+- Staggered card reveal animations and hover-lift via Framer Motion
+- Fully keyboard navigable with visible focus rings, ARIA live regions on search, and semantic landmarks
+- Responsive from 375px up, tested across mobile, tablet, and desktop breakpoints
 
----
+## Quick start
 
-## Setup
-
-**Requirements:** Node.js 20+ (tested on 20.x and 22.x)
+Requires Node.js 20 or higher.
 
 ```bash
 git clone https://github.com/akallam04/nba-dashboard.git
@@ -48,133 +48,106 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). No environment variables required — the project uses TheSportsDB's free public API with key `3`.
+Open [http://localhost:3000](http://localhost:3000). No environment variables or API keys required — the project uses [TheSportsDB](https://www.thesportsdb.com/)'s free public tier.
 
-To create a production build:
+For a production build:
 
 ```bash
 npm run build
 npm start
 ```
 
----
+## Architecture
 
-## Architecture decisions
+### Why App Router over Pages Router
 
-### Why App Router?
+The App Router (stable since Next.js 13.4) co-locates data fetching with the components that consume it via async Server Components. That eliminates the prop-drilling and loading-waterfall problems inherent to `getServerSideProps`. Each route segment owns its own `loading.tsx` and `error.tsx`, which Next wraps in `<Suspense>` and `<ErrorBoundary>` automatically — so route-level loading and error UI cost almost no code.
 
-Next.js App Router (introduced in v13, mature in v15+) co-locates data fetching with the components that need it via async Server Components. This eliminates the prop-drilling and waterfall issues that come with `getServerSideProps`. Each route segment (`/` and `/teams/[id]`) fetches its own data independently, and loading/error boundaries are handled through the file-based conventions (`loading.tsx`, `error.tsx`).
+### Server vs. Client Components
 
-### Why TheSportsDB?
+| Component | Rendering | Why |
+|---|---|---|
+| `app/page.tsx` | Server | Fetches all 30 teams at request time, no client JS needed for initial render |
+| `app/teams/[id]/page.tsx` | Server | Parallel fetch of team + roster, zero client-side waterfall |
+| `TeamGrid` | Client | Owns search state, needs `useState` and `useDeferredValue` |
+| `TeamCard` | Client | Framer Motion animations require browser APIs |
+| `ThemeToggle` | Client | Reads and writes `localStorage`, mutates the DOM |
 
-It's the only credible sports API with a completely free tier that requires zero signup — reviewers can clone and run immediately without needing to create accounts or set environment variables. The free key (`3`) supports read-only lookups for teams and players. The 30-team NBA dataset fits comfortably in a single request, making pagination unnecessary while still meeting the "20+ items" requirement.
-
-### Data fetching: Server vs. Client Components
-
-| Component | Rendering | Reason |
-|-----------|-----------|--------|
-| `app/page.tsx` | Server | Fetches all 30 teams at request time; passes data down to the client grid |
-| `app/teams/[id]/page.tsx` | Server | Fetches team + players in parallel (`Promise.allSettled`-style); no secrets exposed |
-| `TeamGrid` | Client | Owns search state; needs `useState` + `useDeferredValue` for real-time filtering |
-| `TeamCard` | Client | Uses Framer Motion for animations (requires browser APIs) |
-| `ThemeToggle` | Client | Reads/writes `localStorage` and mutates the DOM |
-
-The API layer in `src/lib/api.ts` uses `fetch` with `next: { revalidate: 3600 }` so responses are cached for an hour — fast subsequent loads without stale data.
+The API layer in `src/lib/api.ts` uses `fetch` with `next: { revalidate: 3600 }`, giving free server-side caching without any manual cache plumbing.
 
 ### State management
 
-No global state library. The only state in the app is:
+Deliberately minimal — no Redux, no Zustand, no Context. The only state in the app is:
 
-1. **Search query** — `useState` local to `TeamGrid`, filtered with `useDeferredValue` for responsive input even on slow devices
-2. **Theme preference** — `localStorage` + a `data-theme` attribute on `<html>`
+1. Search query (`useState` inside `TeamGrid`, filtered with `useDeferredValue`)
+2. Theme preference (`localStorage` plus a `data-theme` attribute on the `<html>` element)
 
-This is intentionally minimal. Adding a favorites feature would be the natural next step for local state (localStorage), and a comparison view would motivate introducing a lightweight store like Zustand.
+Adding a favorites feature would be the natural trigger for introducing persisted local state, and a team comparison view would justify a lightweight store.
 
-### Theme toggle without flash
+### Zero-flash theme toggle
 
-The trick is a **blocking synchronous script** injected into `<head>` before any HTML renders:
-
-```js
-(function() {
-  var stored = localStorage.getItem('theme');
-  var theme = stored === 'light' || stored === 'dark'
-    ? stored
-    : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  document.documentElement.setAttribute('data-theme', theme);
-})();
-```
-
-Because this script runs before the browser has painted anything, there's no visible flash. CSS custom properties keyed on `[data-theme]` handle the actual color switching — no JavaScript is needed to re-paint on navigation.
+The standard pitfall with dark mode is the brief white flash on page load before JavaScript runs and applies the user's saved preference. The fix is a blocking synchronous `<script>` in `<head>` that runs before paint — it reads `localStorage`, falls back to `prefers-color-scheme`, and sets `data-theme` on `<html>` before any styles apply. CSS custom properties keyed on `[data-theme]` handle the actual color switching from there, so navigation never re-flashes.
 
 ### Error boundaries
 
-Next.js App Router automatically wraps each `loading.tsx` and `error.tsx` in a React `<Suspense>` and `<ErrorBoundary>` respectively. I added route-level files at:
+Three error entry points are wired up:
 
-- `app/error.tsx` — catches errors during team list fetch
-- `app/teams/[id]/error.tsx` — catches errors during team detail fetch
-- `app/teams/[id]/not-found.tsx` — renders when `notFound()` is thrown (invalid team ID)
-
----
+- `app/error.tsx` catches list page fetch failures
+- `app/teams/[id]/error.tsx` catches detail page fetch failures
+- `app/teams/[id]/not-found.tsx` renders when `notFound()` is thrown for an invalid team id
 
 ## Project structure
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx              # Root layout: fonts, theme script, header, footer
-│   ├── page.tsx                # List page (Server Component — fetches all teams)
-│   ├── loading.tsx             # Skeleton UI shown while list page data loads
-│   ├── error.tsx               # Error boundary for list page
-│   ├── globals.css             # Tailwind import + CSS custom properties for theming
+│   ├── layout.tsx              # Root layout: fonts, theme script, header
+│   ├── page.tsx                # List page (Server Component)
+│   ├── loading.tsx             # Route-level skeleton
+│   ├── error.tsx               # Route-level error boundary
+│   ├── globals.css             # Tailwind + theme CSS variables
 │   └── teams/[id]/
-│       ├── page.tsx            # Team detail page (Server Component)
-│       ├── loading.tsx         # Skeleton UI for detail page
-│       └── error.tsx           # Error boundary for detail page
+│       ├── page.tsx            # Detail page (Server Component)
+│       ├── loading.tsx
+│       └── error.tsx
 ├── components/
-│   ├── Button.tsx              # Reusable button — variants: primary/secondary/ghost, sizes: sm/md/lg
-│   ├── LoadingIndicator.tsx    # Spinner + TeamCardSkeleton + TeamGridSkeleton + DetailSkeleton
-│   ├── TeamCard.tsx            # Individual team card with per-team accent color + animations
-│   ├── TeamGrid.tsx            # Client Component: search state, filtered grid, empty state
-│   ├── PlayerCard.tsx          # Compact player tile for roster section
-│   ├── SearchInput.tsx         # Controlled search input with clear button + ARIA live region
-│   ├── EmptyState.tsx          # Shown when search returns 0 results
-│   ├── ErrorState.tsx          # Shown on fetch failure, with retry callback
-│   ├── ThemeToggle.tsx         # Dark/light toggle that reads/writes localStorage
-│   └── Header.tsx              # Sticky header with logo + theme toggle
+│   ├── Button.tsx              # Reusable — variants + sizes
+│   ├── LoadingIndicator.tsx    # Spinner + skeleton variants
+│   ├── TeamCard.tsx            # Per-team accent color + motion
+│   ├── TeamGrid.tsx            # Client: search state + filtered render
+│   ├── PlayerCard.tsx
+│   ├── SearchInput.tsx         # Controlled input + ARIA live region
+│   ├── EmptyState.tsx
+│   ├── ErrorState.tsx
+│   ├── ThemeToggle.tsx
+│   └── Header.tsx
 ├── lib/
-│   ├── api.ts                  # Typed fetch wrappers for TheSportsDB endpoints
-│   └── utils.ts                # cn() helper (clsx + tailwind-merge) + color/URL utils
+│   ├── api.ts                  # Typed fetch wrappers
+│   └── utils.ts                # cn() + color/URL helpers
 └── types/
-    └── index.ts                # Team, Player, and API response interfaces
+    └── index.ts                # Team, Player, API response types
 ```
-
----
 
 ## Known limitations
 
-- **Free API tier** — `lookup_all_players.php` returns at most ~10 players per team on the free key. This is a TheSportsDB constraint, not a bug.
-- **No pagination** — with exactly 30 teams, it's not needed. If the dataset grew, virtual scrolling or cursor-based pagination would be the right solution.
-- **No tests** — unit and integration tests are not included (see "What I'd improve").
-- **Revalidation is time-based** — the `revalidate: 3600` cache means data can be up to an hour stale. On-demand revalidation via webhooks would be better for a production app.
-- **Players section is sparse** — the free API tier limits roster depth significantly. The section renders gracefully with whatever data is returned, or hides entirely if the response is empty.
-- **No image fallback dimensions** — some team fanart images from the API have inconsistent aspect ratios.
+- **Free API tier caps** — `lookup_all_players.php` returns a shallow roster on the free key. The section renders whatever the API returns and hides gracefully when empty.
+- **No automated tests** — unit and E2E tests were out of scope for the time budget. See the roadmap below.
+- **Time-based revalidation only** — the 1-hour `revalidate` window means data can be up to an hour stale. On-demand revalidation via webhooks would be the right production approach.
+- **No pagination** — not needed for 30 items, but would be essential at league-wide player scale.
 
----
+## Roadmap
 
-## What I'd improve with more time
+Things I'd tackle next with more time:
 
-- **Unit tests** with Vitest + React Testing Library — especially for `TeamGrid` search filtering and the `ThemeToggle` localStorage logic
-- **E2E tests** with Playwright — cover the full user journey: load list → search → navigate to detail → go back
-- **Server-side caching** with `use cache` (Next.js 16 stable feature) for finer-grained control than `revalidate`
-- **Favorites feature** — pin teams to the top of the grid, persisted in localStorage
-- **Team comparison view** — select two teams and view their stats side-by-side
-- **Conference/division filters** — faceted filtering alongside search
-- **Accessibility audit** — run axe-core and verify against WCAG 2.1 AA
-- **Lighthouse optimization** — target 90+ on Performance and Accessibility
-- **CI/CD with GitHub Actions** — lint + typecheck + build on every PR
-- **OG image generation** — dynamic `opengraph-image.tsx` per team using Next.js's image generation API
-
----
+- Unit tests with Vitest + React Testing Library, targeting `TeamGrid` search logic and the theme toggle's localStorage handling
+- End-to-end tests with Playwright for the list → search → detail → back flow
+- Favorites feature persisted to localStorage, with starred teams pinned to the top of the grid
+- Team comparison view for side-by-side stats
+- Conference / division filter chips alongside search
+- Dynamic OG images per team via `opengraph-image.tsx`
+- GitHub Actions CI: lint + typecheck + build on every PR
+- Full WCAG 2.1 AA audit with axe-core
+- Lighthouse 90+ across Performance, Accessibility, Best Practices, and SEO
 
 ## License
 
