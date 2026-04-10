@@ -9,12 +9,10 @@ A responsive data dashboard showcasing all 30 NBA franchises — built as a fron
 
 ---
 
-![Dark mode list view](./docs/dark-list.png)
-
-| | |
+| Dark | Light |
 |---|---|
-| ![Light mode list view](./docs/light-list.png) | ![Dark mode detail view](./docs/dark-detail.png) |
-| ![Light mode detail view](./docs/light-detail.png) | |
+| ![Dark mode list view](./docs/dark-list.png) | ![Light mode list view](./docs/light-list.png) |
+| ![Dark mode detail view](./docs/dark-detail.png) | ![Light mode detail view](./docs/light-detail.png) |
 
 ---
 
