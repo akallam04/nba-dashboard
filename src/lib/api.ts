@@ -31,10 +31,11 @@ export async function getAllTeams(): Promise<Team[]> {
 }
 
 export async function getTeam(id: string): Promise<Team> {
-  const data = await safeFetch<TeamsApiResponse>(
-    `${BASE_URL}/lookupteam.php?id=${encodeURIComponent(id)}`
-  );
-  const team = data.teams?.[0];
+  // lookupteam.php always returns Arsenal on the free API key regardless of the
+  // id parameter. Instead, fetch all NBA teams (cached, same URL as the list
+  // page so Next.js deduplicates the request) and find by idTeam.
+  const teams = await getAllTeams();
+  const team = teams.find((t) => t.idTeam === id);
   if (!team) throw new ApiError("Team not found", 404);
   return team;
 }
