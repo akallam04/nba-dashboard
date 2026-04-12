@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTeam, getTeamPlayers } from "@/lib/api";
-import { normalizeColor, ensureHttps } from "@/lib/utils";
+import { normalizeColor, normalizeSocialUrl } from "@/lib/utils";
 import type { Team } from "@/types";
 import { PlayerCard } from "@/components/PlayerCard";
 
@@ -39,7 +39,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
   const players = await getTeamPlayers(id);
   const accentColor = normalizeColor(team.strColour1);
   const secondaryColor = normalizeColor(team.strColour2 || team.strColour1);
-  const websiteUrl = ensureHttps(team.strWebsite);
+  const websiteUrl = normalizeSocialUrl(team.strWebsite, "website");
   const description = team.strDescriptionEN?.trim();
   const paragraphs = description
     ? description.split(/\r?\n\r?\n/).filter(Boolean).slice(0, 3)
@@ -301,7 +301,7 @@ function StatCard({
 function SocialLinks({ team }: { team: Team }) {
   const links = [
     {
-      href: ensureHttps(team.strTwitter),
+      href: normalizeSocialUrl(team.strTwitter, "twitter"),
       label: "Twitter / X",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -310,7 +310,7 @@ function SocialLinks({ team }: { team: Team }) {
       ),
     },
     {
-      href: ensureHttps(team.strInstagram),
+      href: normalizeSocialUrl(team.strInstagram, "instagram"),
       label: "Instagram",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -321,7 +321,7 @@ function SocialLinks({ team }: { team: Team }) {
       ),
     },
     {
-      href: ensureHttps(team.strFacebook),
+      href: normalizeSocialUrl(team.strFacebook, "facebook"),
       label: "Facebook",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
