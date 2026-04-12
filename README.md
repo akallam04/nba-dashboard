@@ -2,6 +2,8 @@
 
 A responsive data dashboard showcasing all 30 NBA franchises — built as a front-end take-home project in Next.js 16 with a focus on aesthetic polish, accessibility, and thoughtful architecture.
 
+**Live demo:** [nba-teams-dashboard.vercel.app](https://nba-teams-dashboard.vercel.app)
+
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
