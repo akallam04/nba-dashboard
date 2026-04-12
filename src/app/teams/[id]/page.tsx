@@ -256,12 +256,18 @@ export default async function TeamPage({ params }: TeamPageProps) {
       {/* Roster */}
       {players.length > 0 && (
         <section aria-label="Team roster">
-          <h2 className="font-display font-bold text-xl text-primary mb-4">
-            Roster
+          <h2 className="font-display font-bold text-xl text-primary mb-1">
+            Featured Players
             <span className="ml-2 text-sm font-normal text-muted font-body">
               ({players.length} players)
             </span>
           </h2>
+          {players.length === 10 && (
+            <p className="text-xs text-muted italic mb-4">
+              Showing a limited selection from TheSportsDB&apos;s free public API.
+            </p>
+          )}
+          {players.length !== 10 && <div className="mb-4" />}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {players.map((player) => (
               <PlayerCard

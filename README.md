@@ -128,7 +128,7 @@ src/
 
 ## Known limitations
 
-- **Free API tier caps** — `lookup_all_players.php` returns a shallow roster on the free key. The section renders whatever the API returns and hides gracefully when empty.
+- **Roster depth is limited to ~10 players per team** — this is a hard cap on TheSportsDB's free public tier (`lookup_all_players.php`), not a UI bug. The detail page labels this section "Featured Players" and notes the limitation. A premium API key would return full rosters.
 - **No automated tests** — unit and E2E tests were out of scope for the time budget. See the roadmap below.
 - **Time-based revalidation only** — the 1-hour `revalidate` window means data can be up to an hour stale. On-demand revalidation via webhooks would be the right production approach.
 - **No pagination** — not needed for 30 items, but would be essential at league-wide player scale.
