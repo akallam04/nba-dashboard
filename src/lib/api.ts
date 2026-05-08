@@ -1,3 +1,4 @@
+import nbaTeamsSnapshot from "@/data/nba-teams.json";
 import type { Team, TeamsApiResponse, Player, PlayersApiResponse } from "@/types";
 
 const BASE_URL = "https://www.thesportsdb.com/api/v1/json/3";
@@ -23,17 +24,15 @@ async function safeFetch<T>(url: string): Promise<T> {
 }
 
 export async function getAllTeams(): Promise<Team[]> {
-  const data = await safeFetch<TeamsApiResponse>(
-    `${BASE_URL}/search_all_teams.php?l=NBA`
-  );
-  if (!data.teams) return [];
-  return data.teams.sort((a, b) => a.strTeam.localeCompare(b.strTeam));
+  // TheSportsDB free tier caps search_all_teams at 10 results and lookupteam returns
+  // incorrect data. We use a committed snapshot for a complete, reliable team list.
+  return (nbaTeamsSnapshot.teams as Team[])
+    .slice()
+    .sort((a, b) => (a.strTeam ?? "").localeCompare(b.strTeam ?? ""));
 }
 
 export async function getTeam(id: string): Promise<Team> {
-  // lookupteam.php always returns Arsenal on the free API key regardless of the
-  // id parameter. Instead, fetch all NBA teams (cached, same URL as the list
-  // page so Next.js deduplicates the request) and find by idTeam.
+  
   const teams = await getAllTeams();
   const team = teams.find((t) => t.idTeam === id);
   if (!team) throw new ApiError("Team not found", 404);
