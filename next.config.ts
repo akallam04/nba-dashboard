@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "r2.thesportsdb.com",
         pathname: "/images/**",
       },
+      {
+        protocol: "https",
+        hostname: "www.thesportsdb.com",
+        pathname: "/images/**",
+      },
     ],
   },
 };
