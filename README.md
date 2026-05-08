@@ -67,13 +67,11 @@ The App Router (stable since Next.js 13.4) co-locates data fetching with the com
 
 | Component | Rendering | Why |
 |---|---|---|
-| `app/page.tsx` | Server | Fetches all 30 teams at request time, no client JS needed for initial render |
-| `app/teams/[id]/page.tsx` | Server | Parallel fetch of team + roster, zero client-side waterfall |
+| `app/page.tsx` | Server | Reads all 30 teams from local snapshot at request time, no client JS needed for initial render |
+| `app/teams/[id]/page.tsx` | Server | Reads team from local snapshot, fetches roster server-side |
 | `TeamGrid` | Client | Owns search state, needs `useState` and `useDeferredValue` |
 | `TeamCard` | Client | Framer Motion animations require browser APIs |
 | `ThemeToggle` | Client | Reads and writes `localStorage`, mutates the DOM |
-
-The API layer in `src/lib/api.ts` uses `fetch` with `next: { revalidate: 3600 }`, giving free server-side caching without any manual cache plumbing.
 
 ### State management
 
@@ -95,6 +93,16 @@ Three error entry points are wired up:
 - `app/error.tsx` catches list page fetch failures
 - `app/teams/[id]/error.tsx` catches detail page fetch failures
 - `app/teams/[id]/not-found.tsx` renders when `notFound()` is thrown for an invalid team id
+
+### Resilient data layer with self-hosted assets
+
+The dashboard reads all team data from a committed JSON snapshot at `src/data/nba-teams.json`, and serves all team badges from `public/team-badges/` — no third-party CDN dependencies for the core experience. This is a deliberate resilience decision rather than a workaround.
+
+The original implementation used TheSportsDB's free public API for both list (`search_all_teams.php`) and detail (`lookupteam.php`) data. Both endpoints have since become unreliable on the free tier — the list endpoint silently caps at 10 results, and individual team lookups have started returning unrelated data. Rather than gate the project behind a paid API key, I snapshotted the full 30-team dataset, downloaded the badge images into the repo, and made the dashboard self-contained for the parts users see most.
+
+A live API call still exists for the optional roster section on team detail pages. When the API returns players, they render under "Featured Players." When it returns nothing, the section is hidden — the rest of the page is unaffected.
+
+The trade-off is that team metadata (arena, founding year, badge image) is point-in-time. Refreshing the snapshot is a small script away. For a portfolio project that should never serve a degraded experience to a recruiter, the trade is worth it.
 
 ## Project structure
 
@@ -130,10 +138,10 @@ src/
 
 ## Known limitations
 
-- **Roster depth is limited to ~10 players per team** — this is a hard cap on TheSportsDB's free public tier (`lookup_all_players.php`), not a UI bug. The detail page labels this section "Featured Players" and notes the limitation. A premium API key would return full rosters.
-- **No automated tests** — unit and E2E tests were out of scope for the time budget. See the roadmap below.
-- **Time-based revalidation only** — the 1-hour `revalidate` window means data can be up to an hour stale. On-demand revalidation via webhooks would be the right production approach.
-- **No pagination** — not needed for 30 items, but would be essential at league-wide player scale.
+- **Team metadata is a committed snapshot.** Arena names, founding years, and badge images are point-in-time as of the last snapshot refresh. They do not auto-update.
+- **Roster data depends on an external free API tier.** The "Featured Players" section on detail pages calls TheSportsDB's `lookup_all_players.php` endpoint, which has uneven availability across teams on the free tier. Where a team returns no players, the section is hidden gracefully rather than rendering empty.
+- **No automated tests yet.** Unit and end-to-end tests are listed in the roadmap.
+- **No pagination.** With 30 NBA franchises the list fits on one screen; pagination would only matter at league-wide player scale.
 
 ## Roadmap
 
