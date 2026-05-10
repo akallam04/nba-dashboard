@@ -40,6 +40,13 @@ export default async function TeamPage({ params }: TeamPageProps) {
   const accentColor = normalizeColor(team.strColour1);
   const secondaryColor = normalizeColor(team.strColour2 || team.strColour1);
   const websiteUrl = normalizeSocialUrl(team.strWebsite, "website");
+  const socialUrls = {
+    twitter: normalizeSocialUrl(team.strTwitter, "twitter"),
+    instagram: normalizeSocialUrl(team.strInstagram, "instagram"),
+    facebook: normalizeSocialUrl(team.strFacebook, "facebook"),
+  };
+  const hasAnyAction =
+    Boolean(websiteUrl) || Object.values(socialUrls).some(Boolean);
   const description = team.strDescriptionEN?.trim();
   const paragraphs = description
     ? description.split(/\r?\n\r?\n/).filter(Boolean).slice(0, 3)
@@ -180,40 +187,42 @@ export default async function TeamPage({ params }: TeamPageProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-3">
-              {websiteUrl && (
-                <a
-                  href={websiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                >
-                  Official Website
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
+            {hasAnyAction && (
+              <div className="flex flex-wrap gap-3">
+                {websiteUrl && (
+                  <a
+                    href={websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                   >
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15,3 21,3 21,9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                </a>
-              )}
-              <SocialLinks team={team} />
-            </div>
+                    Official Website
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15,3 21,3 21,9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </a>
+                )}
+                <SocialLinks team={team} urls={socialUrls} />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Description */}
-      {paragraphs.length > 0 && (
+      {paragraphs.length > 0 ? (
         <section className="mb-10" aria-label="Team history">
           <h2 className="font-display font-bold text-xl text-primary mb-4">
             About the {team.strTeam}
@@ -222,6 +231,14 @@ export default async function TeamPage({ params }: TeamPageProps) {
             {paragraphs.map((para, i) => (
               <p key={i}>{para}</p>
             ))}
+          </div>
+        </section>
+      ) : (
+        <section className="mb-10" aria-label="Team history">
+          <div className="rounded-lg border border-muted/20 bg-muted/5 px-6 py-10 text-center">
+            <p className="text-sm italic text-muted">
+              More information about this team is coming soon.
+            </p>
           </div>
         </section>
       )}
@@ -304,10 +321,20 @@ function StatCard({
   );
 }
 
-function SocialLinks({ team }: { team: Team }) {
+function SocialLinks({
+  team,
+  urls,
+}: {
+  team: Team;
+  urls: {
+    twitter: string | null;
+    instagram: string | null;
+    facebook: string | null;
+  };
+}) {
   const links = [
     {
-      href: normalizeSocialUrl(team.strTwitter, "twitter"),
+      href: urls.twitter,
       label: "Twitter / X",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -316,7 +343,7 @@ function SocialLinks({ team }: { team: Team }) {
       ),
     },
     {
-      href: normalizeSocialUrl(team.strInstagram, "instagram"),
+      href: urls.instagram,
       label: "Instagram",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -327,7 +354,7 @@ function SocialLinks({ team }: { team: Team }) {
       ),
     },
     {
-      href: normalizeSocialUrl(team.strFacebook, "facebook"),
+      href: urls.facebook,
       label: "Facebook",
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
